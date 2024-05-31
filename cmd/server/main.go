@@ -39,7 +39,7 @@ func checkCepMiddleware(next http.Handler) http.Handler {
 		cep := chi.URLParam(r, "cep")
 
 		if cep == "" || len(cep) == 0 {
-			http.Error(w, "CEP is required", http.StatusBadRequest)
+			http.Error(w, "invalid zipcode", http.StatusUnprocessableEntity)
 			return
 		}
 
@@ -50,7 +50,8 @@ func checkCepMiddleware(next http.Handler) http.Handler {
 
 		for _, d := range cep {
 			if d < '0' || d > '9' {
-				http.Error(w, "invalid CEP", http.StatusUnprocessableEntity)
+				http.Error(w, "invalid zipcode", http.StatusUnprocessableEntity)
+				return
 			}
 		}
 
@@ -63,11 +64,11 @@ func handleGetTemperatureByCEP(w http.ResponseWriter, r *http.Request) {
 
 	log.Println(cepReq)
 	address, err := cep.GetAddressFromViaCEP(cepReq)
-	if err != nil {
+
+	if err != nil || address == nil{
 		http.Error(w, "can not find zipcode", http.StatusNotFound)
 		return
 	}
-	log.Println(address.Localidade)
 
 	weatherResponse, err := weather.GetWeather(address.Localidade)
 	log.Println(weatherResponse.Current.TempC)
